@@ -44,7 +44,7 @@ No credentials are needed. The four steps:
 3. `notebooks/03_analysis.py` — the bridge: each GBIF record on the cell matching its uncertainty (finest depth whose
    cell edge is at least twice the stated uncertainty, depth 6–18), Sentinel-2 read on that cell; records without a
    stated uncertainty (290 of 861) are left out, not guessed. `results/records_support.csv`, `results/summary.csv`.
-4. `notebooks/04_figures.py` — the images used in the deck. Markers are colour-blind safe (Okabe-Ito yellow and white,
+4. `notebooks/04_figures.py` — the images used in the deck. Markers are colour-blind safe (cyan and white,
    with a black halo).
 5. `notebooks/05_photos.py` — the three third-party photos of slide 9 (drone, eDNA, LiDAR) from Wikimedia Commons,
    with author, licence and source read from the Commons API into `figures/photo_credits.json`.

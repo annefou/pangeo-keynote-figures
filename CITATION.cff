@@ -56,4 +56,4 @@ references:
       - family-names: "Fouilloux"
         given-names: "Anne"
     year: "2026"
-    doi: "{{PAPER_DOI}}"
+    notes: "Keynote slides; their Zenodo DOI is added after the talk (7 October 2026)."

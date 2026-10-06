@@ -36,10 +36,10 @@
     "Science-Live"
   ],
   "referencePublication": {
-    "@type": "ScholarlyArticle",
+    "@type": "PresentationDigitalDocument",
     "name": "Pangeo: Openness for Sovereignty, Innovation, and Sustainable Communities",
     "datePublished": "2026",
-    "@id": "https://doi.org/{{PAPER_DOI}}"
+    "@id": "#keynote-2026-10-07"
   },
   "isPartOf": {
     "@type": "Organization",

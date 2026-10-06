@@ -37,7 +37,7 @@
         { "@id": "nanopubs/PUBLISHED.md" }
       ],
       "citation": [
-        { "@id": "https://doi.org/{{PAPER_DOI}}" }
+        { "@id": "#keynote-2026-10-07" }
       ]
     },
     {
@@ -130,8 +130,8 @@
       "description": "URIs of the published Quote / AIDA / FORRT Claim / Replication Study / Replication Outcome / CiTO Citation steps."
     },
     {
-      "@id": "https://doi.org/{{PAPER_DOI}}",
-      "@type": "ScholarlyArticle",
+      "@id": "#keynote-2026-10-07",
+      "@type": "PresentationDigitalDocument",
       "name": "Pangeo: Openness for Sovereignty, Innovation, and Sustainable Communities",
       "datePublished": "2026"
     }

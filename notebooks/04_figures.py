@@ -26,9 +26,6 @@
 # %%
 import json
 
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.cm as cm
 import numpy as np
 import xarray as xr
 from PIL import Image
@@ -42,7 +39,7 @@ FIGURES.mkdir(parents=True, exist_ok=True)
 STORE = RESULTS / "montseny_healpix.zarr"
 
 
-RECORD = [240, 228, 66]   # Okabe-Ito yellow: records and precise cells
+RECORD = [0, 229, 255]    # cyan: records and precise cells (distinct from vegetation in hue and brightness)
 WIDE = [255, 255, 255]    # white: cells of ~800 m and more
 HALO = [0, 0, 0]          # black halo around every mark, readable on green and on grey, and in grey-scale
 
@@ -112,8 +109,8 @@ paint(p1, ndimage.binary_dilation(np.isin(C[DEPTH_GROUND], g16.cell_ids.values),
 Image.fromarray(p1.astype("uint8")).save(FIGURES / "panel1_gbif_d16.png")
 
 # panel 4: a 5 km zoom. Each record sits on the cell matching its uncertainty, drawn over Sentinel-2 at 10 m:
-# filled yellow for cells of ~25-50 m (depth 17-18), yellow outlines for ~100-400 m, white for ~800 m-6 km;
-# all with a black halo (colour-blind safe, Okabe-Ito). Cells larger than ~6 km (depth < 10)
+# filled cyan for cells of ~25-50 m (depth 17-18), cyan outlines for ~100-400 m, white for ~800 m-6 km;
+# all with a black halo (distinct from vegetation also for red-green colour blindness). Cells larger than ~6 km (depth < 10)
 # do not fit in the box and are only counted (results/summary.csv).
 import pandas as pd
 rec = pd.read_csv(RESULTS / "records_support.csv")
@@ -154,3 +151,4 @@ strip = Image.new("RGB", (4 * S + 3 * gap, S), "white")
 for i, name in enumerate(["panel1_gbif_d16", "panel2_sentinel2_d18", "panel3_sentinel3_d14", "panel4_bridge_support"]):
     strip.paste(Image.open(FIGURES / f"{name}.png").resize((S, S), Image.LANCZOS), (i * (S + gap), 0))
 strip.save(FIGURES / "bridge_strip.jpg", quality=90)
+strip
