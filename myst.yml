@@ -15,6 +15,7 @@ project:
     - file: notebooks/03_analysis.ipynb
     - file: notebooks/04_figures.ipynb
     - file: notebooks/05_photos.ipynb
+    - file: notebooks/06_upstream_figures.ipynb
     - file: nanopubs/README.md
 site:
   title: "pangeo-keynote-figures"

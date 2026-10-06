@@ -1,0 +1,22 @@
+{
+ "repository": "https://github.com/annefou/esa-frontiers-figures",
+ "commit": "5525727b56a957cdaec245636e62119e58379198",
+ "figures": [
+  {
+   "script": "sphere-vs-ellipsoid/make_healpix_grid.py",
+   "output": "slide8_healpix_globes.png",
+   "md5_committed": "2582420af16673a20628e10a434f5ca8",
+   "md5_rerun": "bdc542ce583e2260d58bf37c963c2672",
+   "byte_identical": false,
+   "pixel_identical": true
+  },
+  {
+   "script": "beni-biomass-forest-height/plot_fh3.py",
+   "output": "slide10_beni_biomass_gbif.png",
+   "md5_committed": "f2ca49700d9dc3c99737a7a403a13aff",
+   "md5_rerun": "b4a287f713084507ba83ff569d727d5b",
+   "byte_identical": false,
+   "pixel_identical": true
+  }
+ ]
+}

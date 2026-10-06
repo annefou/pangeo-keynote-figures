@@ -21,6 +21,7 @@ rule all:
         f"{FIG}/bridge_strip.jpg",
         f"{RES}/summary.csv",
         f"{FIG}/photo_credits.json",
+        f"{RES}/upstream_check.json",
 
 
 # 01: Copernicus Sentinel-2 / Sentinel-3 windows from ESA's EOPF Zarr, GBIF records via healpix-connector
@@ -93,3 +94,15 @@ rule photos:
         f"{RES}/logs/05_photos.log",
     shell:
         run("05_photos.py")
+
+
+# 06: slides 8 and 10, re-run from esa-frontiers-figures at a pinned commit, byte-identity checked
+rule upstream_figures:
+    output:
+        f"{FIG}/slide8_healpix_globes.png",
+        f"{FIG}/slide10_beni_biomass_gbif.png",
+        f"{RES}/upstream_check.json",
+    log:
+        f"{RES}/logs/06_upstream_figures.log",
+    shell:
+        run("06_upstream_figures.py")

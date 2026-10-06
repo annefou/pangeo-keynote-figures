@@ -21,7 +21,7 @@ numpy = "*"
 pandas = ">=2.0"
 xarray = ">=2024.6"
 scipy = "*"
-matplotlib = "*"
+matplotlib = "==3.11.2"
 pyarrow = "*"
 # Pillow downscales + base64-inlines the headline figure into the reader-facing
 # story page (scripts/build_story.py), so the generated HTML is self-contained.

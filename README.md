@@ -22,8 +22,8 @@ grid mapping, as [healpix-convert](https://github.com/GRID4EARTH/healpix-convert
 | 1 (cover) | Copernicus Sentinel-2, 15 Sep 2026: the Vallès, Montseny and the Maresme coast | `figures/catalonia_cover.jpg` | Sentinel-2 L2A T31TDG + T31TDF, 20 m, EOPF Zarr | **byte-identical** to the deck image (2026-10-06) |
 | 2 | The same scene as a band | `figures/catalonia_band.jpg` | same | **byte-identical** |
 | 9 | From the ground to space: GBIF plant records (depth 16, ~100 m), Sentinel-2 (depth 18, ~25 m), Sentinel-3 OLCI (depth 14, ~400 m), and the bridge (5 km zoom): each record on the HEALPix cell matching its stated uncertainty (25 m to 6 km), Sentinel-2 read on that same cell | `figures/bridge_strip.jpg`, `figures/panel*.png`, `results/montseny_healpix.zarr`, `results/records_support.csv`, `results/summary.csv` | Sentinel-2 L2A T31TDG 10 m; Sentinel-3 OLCI L1 EFR; GBIF plants 2025–2026 | the deck uses this output (2026-10-06); GBIF records retrieved 2026-10-06T07:11Z |
-| 8 | The HEALPix grid on WGS84 (globes) | upstream | — | [esa-frontiers-figures/sphere-vs-ellipsoid](https://github.com/annefou/esa-frontiers-figures/tree/main/sphere-vs-ellipsoid) |
-| 10 | BIOMASS forest height × GBIF, Beni | upstream | — | [esa-frontiers-figures/beni-biomass-forest-height](https://github.com/annefou/esa-frontiers-figures/tree/main/beni-biomass-forest-height) |
+| 8 | The HEALPix grid on WGS84 (globes) | `figures/slide8_healpix_globes.png` | re-run of [esa-frontiers-figures](https://github.com/annefou/esa-frontiers-figures) `sphere-vs-ellipsoid` at a pinned commit (step 06) | **pixel-identical** (`results/upstream_check.json`) |
+| 10 | BIOMASS forest height × GBIF, Beni | `figures/slide10_beni_biomass_gbif.png` | re-run of `beni-biomass-forest-height/plot_fh3.py` from the upstream per-cell results (step 06); the full BIOMASS pipeline needs an ESA MAAP account and is documented upstream | **pixel-identical** |
 
 Photos on slide 9 (drone, eDNA, LiDAR) are third-party images from Wikimedia Commons: step 5 downloads and crops them and
 records their licences; see DATA_LICENSES.md.
@@ -48,6 +48,8 @@ No credentials are needed. The four steps:
    with a black halo).
 5. `notebooks/05_photos.py` — the three third-party photos of slide 9 (drone, eDNA, LiDAR) from Wikimedia Commons,
    with author, licence and source read from the Commons API into `figures/photo_credits.json`.
+6. `notebooks/06_upstream_figures.py` — slides 8 and 10, re-run from esa-frontiers-figures at a pinned commit, checked
+   pixel-identical to the figures used in the deck (matplotlib pinned to 3.11.2 for that).
 
 Products, areas and depths are set in one place: `notebooks/config.py`.
 
