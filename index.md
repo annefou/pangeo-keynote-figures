@@ -1,6 +1,6 @@
-# {{REPO_NAME}}
+# pangeo-keynote-figures
 
-> **{{PAPER_TITLE}}** — replication study.
+> **Pangeo: Openness for Sovereignty, Innovation, and Sustainable Communities** — replication study.
 >
 > Reference paper: [{{PAPER_DOI}}](https://doi.org/{{PAPER_DOI}})
 
@@ -13,8 +13,8 @@ This repository is a self-contained replication of the headline claim from the r
 ## Quick start
 
 ```bash
-git clone https://github.com/{{REPO_ORG}}/{{REPO_NAME}}.git
-cd {{REPO_NAME}}
+git clone https://github.com/annefou/pangeo-keynote-figures.git
+cd pangeo-keynote-figures
 pixi install
 pixi run snakemake --cores 1
 ```
@@ -22,7 +22,7 @@ pixi run snakemake --cores 1
 Or with Docker:
 
 ```bash
-docker run --rm ghcr.io/{{REPO_ORG}}/{{REPO_NAME}}:latest
+docker run --rm ghcr.io/annefou/pangeo-keynote-figures:latest
 ```
 
 ## Structure

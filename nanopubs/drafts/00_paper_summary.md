@@ -2,13 +2,13 @@
 
 > This is a working scratchpad for the paper-analysis phase. The output of this file feeds the Quote / AIDA / Claim drafts. It is not itself a nanopub.
 
-**Reference paper:** {{PAPER_TITLE}}
+**Reference paper:** Pangeo: Openness for Sovereignty, Innovation, and Sustainable Communities
 
 **DOI:** {{PAPER_DOI}}
 
 **Authors:** _add._
 
-**Year:** {{PAPER_YEAR}}
+**Year:** 2026
 
 ## Headline claim
 

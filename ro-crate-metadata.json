@@ -14,12 +14,12 @@
     {
       "@id": "./",
       "@type": ["Dataset", "ResearchObject"],
-      "name": "{{REPO_NAME}}",
-      "description": "{{REPO_DESCRIPTION}}",
-      "datePublished": "{{RELEASE_DATE}}",
+      "name": "pangeo-keynote-figures",
+      "description": "Code and data behind the figures of the keynote 'Pangeo: Openness for Sovereignty, Innovation, and Sustainable Communities' (OpenEarthMonitor final event, CREAF, 7 October 2026).",
+      "datePublished": "2026-10-06",
       "license": { "@id": "https://spdx.org/licenses/MIT" },
-      "publisher": { "@id": "{{AUTHOR_ORCID}}" },
-      "author": [{ "@id": "{{AUTHOR_ORCID}}" }],
+      "publisher": { "@id": "https://orcid.org/0000-0002-1784-2920" },
+      "author": [{ "@id": "https://orcid.org/0000-0002-1784-2920" }],
       "mainEntity": { "@id": "Snakefile" },
       "hasPart": [
         { "@id": "Snakefile" },
@@ -41,10 +41,10 @@
       ]
     },
     {
-      "@id": "{{AUTHOR_ORCID}}",
+      "@id": "https://orcid.org/0000-0002-1784-2920",
       "@type": "Person",
-      "name": "{{AUTHOR_NAME}}",
-      "affiliation": "{{AUTHOR_AFFILIATION}}"
+      "name": "Anne Fouilloux",
+      "affiliation": "LifeWatch ERIC"
     },
     {
       "@id": "Snakefile",
@@ -132,8 +132,8 @@
     {
       "@id": "https://doi.org/{{PAPER_DOI}}",
       "@type": "ScholarlyArticle",
-      "name": "{{PAPER_TITLE}}",
-      "datePublished": "{{PAPER_YEAR}}"
+      "name": "Pangeo: Openness for Sovereignty, Innovation, and Sustainable Communities",
+      "datePublished": "2026"
     }
   ]
 }
