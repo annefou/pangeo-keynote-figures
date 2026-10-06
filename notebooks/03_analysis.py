@@ -82,8 +82,21 @@ known["share_in_box"] = (known.n_pixels * 100.0 / known.cell_edge_m ** 2).clip(u
 known.to_csv(RESULTS / "records_support.csv", index=False)
 known.groupby("depth").agg(records=("gbifID", "size"), edge_m=("cell_edge_m", "first"))
 
+# %% [markdown]
+# Sampling effort: records show where people went. Share of the ~100 m cells (depth 16) of the box that hold
+# any record, and the smallest share that holds half of them.
+
+# %%
+c16 = np.unique(cell_ids(lon, lat, 16))
+g16 = xr.open_zarr(RESULTS / "montseny_healpix.zarr", group="gbif/16")
+in_box = np.isin(g16.cell_ids.values, c16)
+counts = np.sort(g16.n_records.values[in_box])[::-1]
+half = int(np.searchsorted(np.cumsum(counts) / counts.sum(), 0.5) + 1)
+
 # %%
 summary = pd.DataFrame([{
+    "d16_cells_in_box": len(c16), "d16_cells_with_records": int(in_box.sum()),
+    "share_cells_with_records": in_box.sum() / len(c16), "share_cells_holding_half": half / len(c16),
     "records": len(g), "with_uncertainty": len(known), "without_uncertainty": len(g) - len(known),
     "uncertainty_min_m": known.uncertainty_m.min(), "uncertainty_median_m": known.uncertainty_m.median(),
     "uncertainty_max_m": known.uncertainty_m.max(), "depths_used": known.depth.nunique(),

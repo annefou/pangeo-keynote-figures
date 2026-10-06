@@ -56,6 +56,7 @@ rule bridge:
     input:
         f"{RAW}/s2_montseny_r10m.nc",
         f"{RAW}/gbif_montseny.json",
+        f"{RES}/montseny_healpix.zarr",
     output:
         f"{RES}/records_support.csv",
         f"{RES}/summary.csv",
