@@ -21,6 +21,11 @@
 # The thumbnails are crops: for the CC BY-SA images, the crops are shared under the same licence.
 
 # %%
+import sys
+from pathlib import Path
+
+# shared settings and helpers live in notebooks/lib/ (works from the repo root and from notebooks/)
+sys.path.insert(0, str(next(p for p in (Path.cwd() / "lib", Path.cwd() / "notebooks" / "lib") if p.exists())))
 import html
 import io
 import json

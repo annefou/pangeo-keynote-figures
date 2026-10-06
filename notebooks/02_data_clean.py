@@ -29,6 +29,11 @@
 # zarr-conventions **dggs** v1 convention with a CF `healpix` grid mapping (as healpix-convert writes it).
 
 # %%
+import sys
+from pathlib import Path
+
+# shared settings and helpers live in notebooks/lib/ (works from the repo root and from notebooks/)
+sys.path.insert(0, str(next(p for p in (Path.cwd() / "lib", Path.cwd() / "notebooks" / "lib") if p.exists())))
 import json
 
 import numpy as np

@@ -22,6 +22,11 @@
 # `data/raw/`, with a source registry in `data/raw/sources.json`. No credentials are needed.
 
 # %%
+import sys
+from pathlib import Path
+
+# shared settings and helpers live in notebooks/lib/ (works from the repo root and from notebooks/)
+sys.path.insert(0, str(next(p for p in (Path.cwd() / "lib", Path.cwd() / "notebooks" / "lib") if p.exists())))
 import json
 from datetime import date
 

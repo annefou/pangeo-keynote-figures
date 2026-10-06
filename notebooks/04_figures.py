@@ -24,6 +24,11 @@
 # Rendering: reflectance scaled by 0.22 (0.20 for the Montseny panels), clipped to [0, 1], gamma 1/1.5.
 
 # %%
+import sys
+from pathlib import Path
+
+# shared settings and helpers live in notebooks/lib/ (works from the repo root and from notebooks/)
+sys.path.insert(0, str(next(p for p in (Path.cwd() / "lib", Path.cwd() / "notebooks" / "lib") if p.exists())))
 import json
 
 import numpy as np

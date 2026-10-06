@@ -1,7 +1,7 @@
 """Shared constants: products, areas of interest and HEALPix depths (one place, so every step agrees)."""
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 RAW, RESULTS, FIGURES = ROOT / "data" / "raw", ROOT / "results", ROOT / "figures"
 
 EOPF = "https://data.eodc.eu/collections/EOPF_ZARR/products/cpm_v270"
