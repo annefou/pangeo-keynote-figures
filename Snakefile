@@ -1,64 +1,94 @@
-# Snakefile — orchestrates the replication pipeline end-to-end.
+# Snakefile: the figures of the keynote "Pangeo: Openness for Sovereignty, Innovation, and Sustainable
+# Communities" (OpenEarthMonitor, 7 October 2026). One rule per step; each runs a jupytext notebook.
 #
-# Replace the placeholder rules with your actual replication steps. The
-# canonical pattern is one rule per pipeline stage, and each rule wraps a
-# notebook executed via jupytext (so the notebook stays the source of truth
-# and the Snakefile just sequences them).
-#
-# Usage:
-#   snakemake --cores 1                  # run everything
-#   snakemake --cores 1 -n               # dry run
+#   pixi run snakemake --cores 1        # everything
+#   pixi run snakemake --cores 1 -n     # dry run
 
-NOTEBOOKS = "notebooks"
-DATA = "data"
-RESULTS = "results"
-FIGURES = "figures"
+NB = "notebooks"
+RAW = "data/raw"
+RES = "results"
+FIG = "figures"
+
+
+def run(nb):
+    return f"cd {NB} && jupytext --to notebook --execute {nb} 2>&1 | tee ../{{log}}"
 
 
 rule all:
     input:
-        # Replace with your actual final artefacts:
-        f"{FIGURES}/main_result.png",
-        f"{RESULTS}/summary.csv",
+        f"{FIG}/catalonia_cover.jpg",
+        f"{FIG}/catalonia_band.jpg",
+        f"{FIG}/bridge_strip.jpg",
+        f"{RES}/summary.csv",
+        f"{FIG}/photo_credits.json",
 
 
-# ---------- 01: Data download ----------
-# Every replication MUST be self-contained: data is downloaded by the notebook,
-# never assumed to exist locally. See CLAUDE.md § Self-contained data.
+# 01: Copernicus Sentinel-2 / Sentinel-3 windows from ESA's EOPF Zarr, GBIF records via healpix-connector
 rule data_download:
     output:
-        f"{DATA}/raw/dataset.zip",
+        f"{RAW}/s2_catalonia_r20m.nc",
+        f"{RAW}/s2_montseny_r10m.nc",
+        f"{RAW}/s3_montseny_olci.nc",
+        f"{RAW}/gbif_montseny.json",
+        f"{RAW}/sources.json",
     log:
-        f"{RESULTS}/logs/01_data_download.log",
+        f"{RES}/logs/01_data_download.log",
     shell:
-        f"cd {{NOTEBOOKS}} && jupytext --to notebook --execute 01_data_download.py 2>&1 | tee ../{{log}}"
+        run("01_data_download.py")
 
 
-# ---------- 02: Data clean ----------
-rule data_clean:
+# 02: every source onto WGS84 NESTED HEALPix (dggs-convention Zarr)
+rule healpix:
     input:
-        f"{DATA}/raw/dataset.zip",
+        f"{RAW}/s2_montseny_r10m.nc",
+        f"{RAW}/s3_montseny_olci.nc",
+        f"{RAW}/gbif_montseny.json",
     output:
-        f"{DATA}/clean/dataset.parquet",
+        directory(f"{RES}/montseny_healpix.zarr"),
+    log:
+        f"{RES}/logs/02_data_clean.log",
     shell:
-        f"cd {{NOTEBOOKS}} && jupytext --to notebook --execute 02_data_clean.py"
+        run("02_data_clean.py")
 
 
-# ---------- 03: Analysis ----------
-rule analysis:
+# 03: the bridge: each GBIF record on the cell matching its uncertainty, Sentinel-2 read on that cell
+rule bridge:
     input:
-        f"{DATA}/clean/dataset.parquet",
+        f"{RAW}/s2_montseny_r10m.nc",
+        f"{RAW}/gbif_montseny.json",
     output:
-        f"{RESULTS}/summary.csv",
+        f"{RES}/records_support.csv",
+        f"{RES}/summary.csv",
+    log:
+        f"{RES}/logs/03_analysis.log",
     shell:
-        f"cd {{NOTEBOOKS}} && jupytext --to notebook --execute 03_analysis.py"
+        run("03_analysis.py")
 
 
-# ---------- 04: Figures ----------
+# 04: the images used in the deck
 rule figures:
     input:
-        f"{RESULTS}/summary.csv",
+        f"{RAW}/s2_catalonia_r20m.nc",
+        f"{RES}/montseny_healpix.zarr",
+        f"{RES}/records_support.csv",
     output:
-        f"{FIGURES}/main_result.png",
+        f"{FIG}/catalonia_cover.jpg",
+        f"{FIG}/catalonia_band.jpg",
+        f"{FIG}/bridge_strip.jpg",
+    log:
+        f"{RES}/logs/04_figures.log",
     shell:
-        f"cd {{NOTEBOOKS}} && jupytext --to notebook --execute 04_figures.py"
+        run("04_figures.py")
+
+
+# 05: third-party photos (Wikimedia Commons), licence read from the Commons API
+rule photos:
+    output:
+        f"{FIG}/photo_drone.jpg",
+        f"{FIG}/photo_edna.jpg",
+        f"{FIG}/photo_lidar.jpg",
+        f"{FIG}/photo_credits.json",
+    log:
+        f"{RES}/logs/05_photos.log",
+    shell:
+        run("05_photos.py")

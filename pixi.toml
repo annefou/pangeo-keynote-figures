@@ -33,6 +33,14 @@ nbclient = "*"
 ipykernel = "*"
 # --- pipeline driver ---
 snakemake = "*"
+# --- this study ---
+zarr = ">=3"
+dask = "*"
+fsspec = "*"
+aiohttp = "*"
+requests = "*"
+netcdf4 = "*"
+pyproj = "*"
 # --- replace/extend with the deps your replication needs ---
 # Examples (uncomment as needed):
 # statsmodels = "*"          # GLM/GLMM regression
@@ -50,6 +58,11 @@ snakemake = "*"
 # dask = "*"                 # out-of-core / parallel
 
 # Pip-only deps go in [pypi-dependencies]. Conda-forge is preferred where available.
+[pypi-dependencies]
+healpix-geo = "==0.4.1"
+# GBIF connector + dggs-convention attributes; pinned to the commit used for the slides
+healpix-connector = { git = "https://github.com/annefou/healpix-connector", rev = "02eb52b961f28ca139d992b938809030486ef643" }
+
 # [pypi-dependencies]
 # pygbif = "*"               # GBIF occurrences
 # polytope-client = "*"      # Destination Earth Climate DT

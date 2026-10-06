@@ -14,55 +14,67 @@
 # ---
 
 # %% [markdown]
-# # 02 — Data clean
+# # 02 — Onto the grid: every source on WGS84 NESTED HEALPix
 #
-# This notebook tidies the raw data from `data/raw/` into an analysis-ready
-# format in `data/clean/`. Document every transformation: filters, renames,
-# joins, deduplications, projections, etc. The cleaned data is what the
-# analysis notebook consumes.
+# Each source keeps its own resolution, and lands on the HEALPix depth that matches it
+# (healpix-geo, WGS84 ellipsoid, NESTED ordering):
+#
+# | source | native | HEALPix depth | cell |
+# |---|---|---|---|
+# | GBIF plant records | points | 16 | ~100 m |
+# | Sentinel-2 L2A | 10 m | 18 | ~25 m |
+# | Sentinel-3 OLCI | ~300 m | 14 | ~400 m |
+#
+# Output: `results/montseny_healpix.zarr`, one group per source and depth, following the
+# zarr-conventions **dggs** v1 convention with a CF `healpix` grid mapping (as healpix-convert writes it).
 
 # %%
-from pathlib import Path
+import json
 
-import pandas as pd
+import numpy as np
+import xarray as xr
 
-# %%
-RAW_DIR = Path("../data/raw")
-CLEAN_DIR = Path("../data/clean")
-CLEAN_DIR.mkdir(parents=True, exist_ok=True)
+from config import RAW, RESULTS, DEPTH_GROUND, DEPTH_S2, DEPTH_S3
+from healpix_tools import utm_lonlat, cell_ids, cell_means, dggs_dataset
+
+RESULTS.mkdir(parents=True, exist_ok=True)
+STORE = RESULTS / "montseny_healpix.zarr"
 
 # %% [markdown]
-# ## Load raw data
+# ## Sentinel-2, 10 m pixels to depth-18 cells (mean surface reflectance)
 
 # %%
-# Replace with your actual file(s):
-# raw = pd.read_csv(RAW_DIR / "dataset.csv")
-# Or for NetCDF: ds = xr.open_dataset(RAW_DIR / "dataset.nc")
-raw = None
+s2 = xr.open_dataset(RAW / "s2_montseny_r10m.nc")
+lon, lat = utm_lonlat(s2.x.values, s2.y.values)
+rgb = np.stack([s2.b04.values, s2.b03.values, s2.b02.values], -1).astype("float32")
+u18, m18, n18 = cell_means(rgb, cell_ids(lon, lat, DEPTH_S2))
+dggs_dataset(DEPTH_S2, u18, {"b04": m18[:, 0], "b03": m18[:, 1], "b02": m18[:, 2], "n_pixels": n18},
+             source="Copernicus Sentinel-2 L2A 2026-09-15, 10 m, cell means").to_zarr(
+    STORE, group=f"sentinel2/{DEPTH_S2}", mode="w", zarr_format=3)
+print(len(u18), "depth-18 cells")
 
 # %% [markdown]
-# ## Apply cleaning steps
-#
-# Document each step. Common patterns:
-#
-# - Filter by date range, region, or quality flag.
-# - Rename columns to a stable schema.
-# - Coerce dtypes.
-# - Drop or impute missing values, with a recorded count.
-# - Join external lookup tables (e.g. species → genus).
+# ## Sentinel-3 OLCI pixels to depth-14 cells (mean top-of-atmosphere radiance)
 
 # %%
-# Example skeleton:
-# clean = (
-#     raw
-#     .pipe(lambda df: df[df["year"].between(2000, 2020)])
-#     .rename(columns={"raw_col": "clean_col"})
-#     .dropna(subset=["clean_col"])
-# )
+s3 = xr.open_dataset(RAW / "s3_montseny_olci.nc")
+ids3 = cell_ids(s3.longitude.values, s3.latitude.values, DEPTH_S3)
+rad = np.stack([s3.oa08_radiance.values, s3.oa06_radiance.values, s3.oa04_radiance.values], -1)
+u3, m3, n3 = cell_means(rad, ids3)
+dggs_dataset(DEPTH_S3, u3, {"oa08_radiance": m3[:, 0], "oa06_radiance": m3[:, 1], "oa04_radiance": m3[:, 2],
+                            "n_pixels": n3},
+             source="Copernicus Sentinel-3 OLCI L1 EFR 2026-09-15, cell means").to_zarr(
+    STORE, group=f"sentinel3/{DEPTH_S3}", mode="a", zarr_format=3)
+print(len(u3), "depth-14 cells")
 
 # %% [markdown]
-# ## Persist clean data
+# ## GBIF plant records: count per cell, at the ground depth (16) and at the bridge depth (14)
 
 # %%
-# Example: clean.to_parquet(CLEAN_DIR / "dataset.parquet")
-# print(f"Wrote {len(clean):,} rows to {CLEAN_DIR / 'dataset.parquet'}")
+g = json.loads((RAW / "gbif_montseny.json").read_text())["records"]
+glon = np.array([r["decimalLongitude"] for r in g]); glat = np.array([r["decimalLatitude"] for r in g])
+for d in sorted({DEPTH_GROUND, DEPTH_S3}, reverse=True):
+    u, c = np.unique(cell_ids(glon, glat, d), return_counts=True)
+    dggs_dataset(d, u, {"n_records": c}, source="GBIF.org plant records 2025-2026 via healpix-connector").to_zarr(
+        STORE, group=f"gbif/{d}", mode="a", zarr_format=3)
+    print(d, len(u), "cells with records")

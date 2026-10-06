@@ -1,0 +1,26 @@
+[
+ {
+  "output": "photo_drone.jpg",
+  "source": "https://commons.wikimedia.org/wiki/File:Orthomosaic_of_Red_Rocks_by_DroneMapper_and_Falcon_UAV.jpg",
+  "artist": "Stoermerjp",
+  "licence": "CC BY-SA 3.0",
+  "licence_url": "https://creativecommons.org/licenses/by-sa/3.0",
+  "changes": "cropped to 16:10 and resized to 480x300"
+ },
+ {
+  "output": "photo_edna.jpg",
+  "source": "https://commons.wikimedia.org/wiki/File:EDNA_Water_Sampling_(36024122736).jpg",
+  "artist": "Monica Blaser, photographer, U.S. Fish and Wildlife Service, Midwest Region. USFWSmidwest",
+  "licence": "Public domain",
+  "licence_url": "",
+  "changes": "cropped to 16:10 and resized to 480x300"
+ },
+ {
+  "output": "photo_lidar.jpg",
+  "source": "https://commons.wikimedia.org/wiki/File:Lidar_forestry.png",
+  "artist": "Bnurs",
+  "licence": "CC BY-SA 4.0",
+  "licence_url": "https://creativecommons.org/licenses/by-sa/4.0",
+  "changes": "cropped to the point cloud, then cropped to 16:10 and resized to 480x300"
+ }
+]

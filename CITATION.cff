@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-title: "pangeo-keynote-figures"
+title: "pangeo-keynote-figures: code and data behind the figures of the keynote 'Pangeo: Openness for Sovereignty, Innovation, and Sustainable Communities'"
 message: "If you use this software, please cite it as below."
 type: software
 authors:
@@ -31,15 +31,27 @@ identifiers:
   # On release, the workflow adds:
   #   - type: doi   value: <version DOI>  "Version DOI for vX.Y.Z — pins this exact release; cite this from nanopubs"
   #   - type: swh   value: swh:1:rev:<commit>;origin=<repo>  "Software Heritage ID of the vX.Y.Z source tree"
+abstract: "Reproducible pipeline for the Earth-observation figures of the keynote given at the OpenEarthMonitor final event (CREAF, 7 October 2026): Copernicus Sentinel-2 and Sentinel-3 read from ESA's EOPF Zarr with Xarray, GBIF records read with healpix-connector, all placed on WGS84 NESTED HEALPix cells with healpix-geo and joined by cell ID."
 keywords:
-  - replication
+  - Pangeo
+  - Copernicus
+  - Sentinel-2
+  - Sentinel-3
+  - EOPF
+  - Zarr
+  - HEALPix
+  - DGGS
+  - GBIF
+  - biodiversity
   - reproducibility
   - FORRT
-  - nanopublication
-  - Science-Live
 references:
-  - type: article
+  - type: conference
     title: "Pangeo: Openness for Sovereignty, Innovation, and Sustainable Communities"
+    conference:
+      name: "OpenEarthMonitor final event"
+      city: "Barcelona"
+      date-start: "2026-10-07"
     authors:
       - family-names: "Fouilloux"
         given-names: "Anne"

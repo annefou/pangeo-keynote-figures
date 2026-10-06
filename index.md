@@ -1,14 +1,32 @@
 # pangeo-keynote-figures
 
-> **Pangeo: Openness for Sovereignty, Innovation, and Sustainable Communities** — replication study.
->
-> Reference paper: [{{PAPER_DOI}}](https://doi.org/{{PAPER_DOI}})
+[![CI](https://github.com/annefou/pangeo-keynote-figures/actions/workflows/ci.yml/badge.svg)](https://github.com/annefou/pangeo-keynote-figures/actions/workflows/ci.yml)
+[![Jupyter Book](https://github.com/annefou/pangeo-keynote-figures/actions/workflows/jupyter-book.yml/badge.svg)](https://annefou.github.io/pangeo-keynote-figures/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![RO-Crate](https://img.shields.io/badge/RO--Crate-1.2-orange)](ro-crate-metadata.json)
 
-This repository is a self-contained replication of the headline claim from the reference paper above. It produces:
+Code and data behind the Earth-observation figures of the keynote **"Pangeo: Openness for Sovereignty, Innovation,
+and Sustainable Communities"** (Anne Fouilloux, LifeWatch ERIC; OpenEarthMonitor final event, CREAF, 7 October 2026).
+Built from the [FORRT replication template](https://github.com/ScienceLiveHub/forrt-replication-template): one Snakemake
+workflow, four jupytext notebooks, a pinned pixi environment, Docker, RO-Crate and GitHub Actions.
 
-- A reproducible computational pipeline (Snakefile + notebooks).
-- A FORRT-tagged nanopublication chain on the [Science Live platform](https://platform.sciencelive4all.org), documenting the claim, the replication design, and the outcome with full provenance.
-- A Zenodo-archived release (source + container image) with a citable DOI.
+Everything is read from its source on each run, with open tools only: Copernicus Sentinel-2 and Sentinel-3 from
+**ESA's EOPF Sample Service** (Zarr, opened lazily with `xr.open_datatree`), GBIF records through
+[healpix-connector](https://github.com/annefou/healpix-connector), and every source placed on **WGS84 NESTED HEALPix**
+cells with [healpix-geo](https://github.com/GRID4EARTH/healpix-geo) (GRID4EARTH). Intermediate HEALPix data are written as
+Zarr v3 following the [zarr-conventions/dggs](https://github.com/zarr-conventions/dggs) convention with a CF `healpix`
+grid mapping, as [healpix-convert](https://github.com/GRID4EARTH/healpix-convert) writes them.
+
+| Slide | Figure | Output | Data | Re-run check |
+|---|---|---|---|---|
+| 1 (cover) | Copernicus Sentinel-2, 15 Sep 2026: the Vallès, Montseny and the Maresme coast | `figures/catalonia_cover.jpg` | Sentinel-2 L2A T31TDG + T31TDF, 20 m, EOPF Zarr | **byte-identical** to the deck image (2026-10-06) |
+| 2 | The same scene as a band | `figures/catalonia_band.jpg` | same | **byte-identical** |
+| 9 | From the ground to space: GBIF plant records (depth 16, ~100 m), Sentinel-2 (depth 18, ~25 m), Sentinel-3 OLCI (depth 14, ~400 m), and the bridge (5 km zoom): each record on the HEALPix cell matching its stated uncertainty (25 m to 6 km), Sentinel-2 read on that same cell | `figures/bridge_strip.jpg`, `figures/panel*.png`, `results/montseny_healpix.zarr`, `results/records_support.csv`, `results/summary.csv` | Sentinel-2 L2A T31TDG 10 m; Sentinel-3 OLCI L1 EFR; GBIF plants 2025–2026 | the deck uses this output (2026-10-06); GBIF records retrieved 2026-10-06T07:11Z |
+| 8 | The HEALPix grid on WGS84 (globes) | upstream | — | [esa-frontiers-figures/sphere-vs-ellipsoid](https://github.com/annefou/esa-frontiers-figures/tree/main/sphere-vs-ellipsoid) |
+| 10 | BIOMASS forest height × GBIF, Beni | upstream | — | [esa-frontiers-figures/beni-biomass-forest-height](https://github.com/annefou/esa-frontiers-figures/tree/main/beni-biomass-forest-height) |
+
+Photos on slide 9 (drone, eDNA, LiDAR) are third-party images, credited in DATA_LICENSES.md; they are not
+produced here.
 
 ## Quick start
 
@@ -19,28 +37,29 @@ pixi install
 pixi run snakemake --cores 1
 ```
 
-Or with Docker:
+No credentials are needed. The four steps:
 
-```bash
-docker run --rm ghcr.io/annefou/pangeo-keynote-figures:latest
-```
+1. `notebooks/01_data_download.py` — Sentinel-2 / Sentinel-3 windows from EOPF Zarr; GBIF records via healpix-connector.
+2. `notebooks/02_data_clean.py` — every source onto its own HEALPix depth (dggs-convention Zarr).
+3. `notebooks/03_analysis.py` — the bridge: each GBIF record on the cell matching its uncertainty (finest depth whose
+   cell edge is at least twice the stated uncertainty, depth 6–18), Sentinel-2 read on that cell; records without a
+   stated uncertainty (290 of 861) are left out, not guessed. `results/records_support.csv`, `results/summary.csv`.
+4. `notebooks/04_figures.py` — the images used in the deck. Markers are colour-blind safe (Okabe-Ito yellow and white,
+   with a black halo).
+5. `notebooks/05_photos.py` — the three third-party photos of slide 9 (drone, eDNA, LiDAR) from Wikimedia Commons,
+   with author, licence and source read from the Commons API into `figures/photo_credits.json`.
 
-## Structure
+Products, areas and depths are set in one place: `notebooks/config.py`.
 
-- `paper/` — the source paper PDF (drop yours in there).
-- `notebooks/` — jupytext `.py` notebooks that drive the pipeline.
-- `data/` — downloaded by `notebooks/01_data_download.py`, never committed.
-- `nanopubs/` — drafts of the FORRT chain field-by-field, plus the published-URI registry.
-- `docs/` — operating manuals (FORRT form fields, chain decision tree, claim-type vocabulary).
-- `figures/` — curated figures used in the Jupyter Book.
+## Known limitations
 
-## Nanopublication chain
+1. GBIF grows every day: a re-run returns more records than the 861 plant records retrieved on 2026-10-06T07:11Z for
+   the slide (the query is in `data/raw/sources.json`). A GBIF download DOI would pin them.
+2. The EOPF Sample Service is a preview service; product URLs may move when ESA moves to operational EOPF products.
+3. Sentinel-3 OLCI radiance is scaled to the Sentinel-2 reflectance of the same cells (per-band median ratio) **for
+   display only**, so that the panels differ by resolution, not by colour. The stored values are unscaled.
+4. Tile T31TDF lies at the swath edge of relative orbit 8; it only fills the rows below T31TDG.
 
-The published chain is listed in [`nanopubs/PUBLISHED.md`](nanopubs/PUBLISHED.md). Each step links to its viewer URL on the Science Live platform.
+## Licence
 
-## Citation
-
-If you use this work, please cite both:
-
-- This software: [`CITATION.cff`](CITATION.cff) → DOI [{{ZENODO_DOI}}]({{ZENODO_DOI}}).
-- The original paper: [{{PAPER_DOI}}](https://doi.org/{{PAPER_DOI}}).
+Code: MIT. Data: see DATA_LICENSES.md. Cite with [CITATION.cff](CITATION.cff).

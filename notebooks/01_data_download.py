@@ -16,88 +16,105 @@
 # %% [markdown]
 # # 01 — Data download
 #
-# This notebook fetches all input data needed by the replication pipeline.
-# Every dataset is downloaded from a citable source (Zenodo, GBIF, Copernicus,
-# etc.) and a record of the source is logged into `data/raw/sources.json`
-# alongside the data files.
-#
-# **Self-contained data:** The repository ships without input data. This
-# notebook is the only path that brings data into `data/raw/`. A user cloning
-# the repo and running this notebook should get a complete reproducible run.
-#
-# **Credentials:** if your replication uses a credentialled API, document the
-# credential setup at the top of this notebook, including:
-#
-# - Where the user gets the credential (URL).
-# - Where it lives on disk (or which env var Claude expects).
-# - The corresponding GitHub Actions secret name(s) for CI.
+# Every input is read from its source, nothing is shipped: Copernicus Sentinel-2 and Sentinel-3 from ESA's
+# **EOPF Sample Service** (Zarr, opened lazily with `xr.open_datatree`, only the needed window is read), and
+# GBIF plant records through **healpix-connector**'s GBIF connector. The windows are stored as CF NetCDF in
+# `data/raw/`, with a source registry in `data/raw/sources.json`. No credentials are needed.
 
 # %%
 import json
-from pathlib import Path
+from datetime import date
 
-import requests
+import numpy as np
+import xarray as xr
+from pyproj import Transformer
 
-# %%
-RAW_DIR = Path("../data/raw")
-RAW_DIR.mkdir(parents=True, exist_ok=True)
+from config import (RAW, S2, S3, TDF_ROW_OFFSET, CATALONIA_ROWS, BOX_CX, BOX_CY, BOX_HALF,
+                    GBIF_TAXON, GBIF_YEARS)
 
-# %% [markdown]
-# ## Source registry
-#
-# Replace the placeholder source(s) below with your actual data sources. Each
-# entry should record: name, URL or DOI, license, accessed-on date, and SHA-256
-# of the downloaded file (computed and added after first download).
+RAW.mkdir(parents=True, exist_ok=True)
+to_lonlat = Transformer.from_crs(32631, 4326, always_xy=True)
 
-# %%
-SOURCES = [
-    {
-        "name": "<dataset-name>",
-        "doi": "<10.x/y or null>",
-        "url": "<https://...>",
-        "license": "<CC-BY-4.0 / CC-BY-NC-4.0 / public-domain / ...>",
-        "accessed_on": "2026-10-06",
-        "sha256": None,  # filled after first download
-    },
-    # Add more sources here as needed.
-]
+
+def nc_safe(ds):
+    """EOPF keeps its own metadata as nested dicts; NetCDF attributes must be flat, so store those as JSON."""
+    for v in list(ds.variables.values()) + [ds]:
+        v.attrs = {k: (json.dumps(a) if isinstance(a, (dict, list)) else a) for k, a in v.attrs.items()}
+    return ds
+
+
+def reflectance(url, res):
+    return xr.open_datatree(url, engine="zarr", chunks={})[f"measurements/reflectance/{res}"].to_dataset()
 
 
 # %% [markdown]
-# ## Download
+# ## Sentinel-2, 20 m, Vallès–Montseny–Maresme (slides 1 and 2)
+# T31TDG is fully covered; T31TDF is at the swath edge, so it only fills the rows below T31TDG.
 
 # %%
-def download_source(source: dict) -> Path:
-    """Fetch a single source into data/raw/. Replace with your real implementation."""
-    # Example skeleton — adapt to your data source's API:
-    # response = requests.get(source["url"], stream=True, timeout=300)
-    # response.raise_for_status()
-    # out_path = RAW_DIR / Path(source["url"]).name
-    # with open(out_path, "wb") as f:
-    #     for chunk in response.iter_content(chunk_size=8192):
-    #         f.write(chunk)
-    # return out_path
-    raise NotImplementedError(
-        "Implement download for: " + source["name"] + ". "
-        "See data/README.md for common patterns."
-    )
-
-
-# %%
-# Uncomment when SOURCES is populated:
-# for source in SOURCES:
-#     print(f"Fetching {source['name']}...")
-#     path = download_source(source)
-#     print(f"  -> {path}")
+g = reflectance(S2["T31TDG"], "r20m")[["b04", "b03", "b02"]]
+f = reflectance(S2["T31TDF"], "r20m")[["b04", "b03", "b02"]]
+r0, r1 = CATALONIA_ROWS
+top = g.isel(y=slice(r0, None)).compute()
+bottom = f.isel(y=slice(g.sizes["y"] - TDF_ROW_OFFSET, r1 - TDF_ROW_OFFSET)).compute()
+cat = xr.concat([top, bottom], dim="y")
+cat.attrs.update(source="Copernicus Sentinel-2 L2A via ESA EOPF Sample Service (Zarr)", crs="EPSG:32631",
+                 products=" ".join(S2.values()), comment="surface reflectance, bands B04/B03/B02 at 20 m")
+nc_safe(cat).to_netcdf(RAW / "s2_catalonia_r20m.nc", encoding={v: {"zlib": True, "complevel": 4} for v in cat.data_vars})
+print(dict(cat.sizes))
 
 # %% [markdown]
-# ## Source log
-#
-# Persist the source registry to disk so that downstream notebooks can audit
-# what data was used and when.
+# ## Sentinel-2, 10 m, the Montseny box (slide 9)
 
 # %%
-with open(RAW_DIR / "sources.json", "w") as f:
-    json.dump({"sources": SOURCES}, f, indent=2)
+s = reflectance(S2["T31TDG"], "r10m")[["b02", "b03", "b04", "b08"]]
+mont = s.sel(x=slice(BOX_CX - BOX_HALF, BOX_CX + BOX_HALF), y=slice(BOX_CY + BOX_HALF, BOX_CY - BOX_HALF)).compute()
+mont.attrs.update(source="Copernicus Sentinel-2 L2A via ESA EOPF Sample Service (Zarr)", crs="EPSG:32631",
+                  product=S2["T31TDG"])
+nc_safe(mont).to_netcdf(RAW / "s2_montseny_r10m.nc", encoding={v: {"zlib": True} for v in mont.data_vars})
+print(dict(mont.sizes))
 
-print(f"Logged {len(SOURCES)} source(s) to {RAW_DIR / 'sources.json'}")
+# %% [markdown]
+# ## Sentinel-3 OLCI, ~300 m, around the same box (slide 9)
+# OLCI comes in sensor geometry with per-pixel latitude/longitude; we keep the rows/columns that fall near the box.
+
+# %%
+m = xr.open_datatree(S3, engine="zarr", chunks={})["measurements"].to_dataset()
+lat, lon = m.latitude.values, m.longitude.values
+near = (lat > 41.6) & (lat < 41.95) & (lon > 2.2) & (lon < 2.6)
+rows, cols = np.where(near)
+w = m[["oa04_radiance", "oa06_radiance", "oa08_radiance"]].isel(
+    rows=slice(rows.min(), rows.max() + 1), columns=slice(cols.min(), cols.max() + 1)).compute()
+w = w.drop_vars([c for c in w.coords if c not in ("latitude", "longitude")])
+w.attrs.update(source="Copernicus Sentinel-3 OLCI L1 EFR via ESA EOPF Sample Service (Zarr)", product=S3,
+               window=f"rows {rows.min()}-{rows.max()}, columns {cols.min()}-{cols.max()}")
+nc_safe(w).to_netcdf(RAW / "s3_montseny_olci.nc")
+print(dict(w.sizes))
+
+# %% [markdown]
+# ## GBIF plant records in the box, through healpix-connector
+# GBIF grows every day: a re-run returns more records than the 861 retrieved on 6 October 2026 for the slide.
+
+# %%
+from healpix_connector.region import Region
+from healpix_connector.connectors import gbif
+
+lo0, la0 = to_lonlat.transform(BOX_CX - BOX_HALF, BOX_CY - BOX_HALF)
+lo1, la1 = to_lonlat.transform(BOX_CX + BOX_HALF, BOX_CY + BOX_HALF)
+res = gbif.search(Region.from_bbox(lo0, la0, lo1, la1), taxon_key=GBIF_TAXON, filters={"year": GBIF_YEARS},
+                  max_records=5100, pad_deg=0.0)
+keep = ("gbifID", "species", "year", "decimalLongitude", "decimalLatitude", "coordinateUncertaintyInMeters")
+(RAW / "gbif_montseny.json").write_text(json.dumps(
+    {"provenance": res.provenance, "records": [{k: r.get(k) for k in keep} for r in res.records]}, indent=1, default=str))
+print(len(res.records), "records")
+
+# %%
+sources = [
+    {"name": "Copernicus Sentinel-2 L2A (EOPF Zarr sample)", "url": u, "license": "Copernicus open and free data licence",
+     "accessed_on": str(date.today())} for u in S2.values()] + [
+    {"name": "Copernicus Sentinel-3 OLCI L1 EFR (EOPF Zarr sample)", "url": S3,
+     "license": "Copernicus open and free data licence", "accessed_on": str(date.today())},
+    {"name": "GBIF occurrence search API (via healpix-connector)", "url": "https://api.gbif.org/v1/occurrence/search",
+     "license": "per-record (CC0 / CC BY / CC BY-NC)", "accessed_on": str(date.today()),
+     "query": res.provenance["params"]}]
+(RAW / "sources.json").write_text(json.dumps(sources, indent=1))

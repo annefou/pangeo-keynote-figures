@@ -2,21 +2,31 @@
 
 [![CI](https://github.com/annefou/pangeo-keynote-figures/actions/workflows/ci.yml/badge.svg)](https://github.com/annefou/pangeo-keynote-figures/actions/workflows/ci.yml)
 [![Jupyter Book](https://github.com/annefou/pangeo-keynote-figures/actions/workflows/jupyter-book.yml/badge.svg)](https://annefou.github.io/pangeo-keynote-figures/)
-[![Docker](https://github.com/annefou/pangeo-keynote-figures/actions/workflows/docker.yml/badge.svg)](https://github.com/annefou/pangeo-keynote-figures/pkgs/container/pangeo-keynote-figures)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![DOI](https://zenodo.org/badge/DOI/{{ZENODO_DOI}}.svg)]({{ZENODO_DOI}})
-[![FAIR4RS](https://img.shields.io/badge/FAIR4RS-conformant-brightgreen)](docs/fair4rs-checklist.md)
-[![FORRT](https://img.shields.io/badge/FORRT-replication-blue)](https://forrt.org/)
-[![Science Live](https://img.shields.io/badge/Science%20Live-nanopub%20chain-purple)](nanopubs/PUBLISHED.md)
 [![RO-Crate](https://img.shields.io/badge/RO--Crate-1.2-orange)](ro-crate-metadata.json)
-[![Software Heritage](https://archive.softwareheritage.org/badge/origin/https://github.com/annefou/pangeo-keynote-figures/)](https://archive.softwareheritage.org/browse/origin/?origin_url=https://github.com/annefou/pangeo-keynote-figures)
 
-> **Pangeo: Openness for Sovereignty, Innovation, and Sustainable Communities** — replication study.
-> Reference paper: [{{PAPER_DOI}}](https://doi.org/{{PAPER_DOI}})
+Code and data behind the Earth-observation figures of the keynote **"Pangeo: Openness for Sovereignty, Innovation,
+and Sustainable Communities"** (Anne Fouilloux, LifeWatch ERIC; OpenEarthMonitor final event, CREAF, 7 October 2026).
+Built from the [FORRT replication template](https://github.com/ScienceLiveHub/forrt-replication-template): one Snakemake
+workflow, four jupytext notebooks, a pinned pixi environment, Docker, RO-Crate and GitHub Actions.
 
-This is a self-contained replication of the headline claim of the reference paper. It produces a reproducible computational pipeline, a Zenodo-archived release with a citable DOI, and a FORRT-tagged nanopublication chain on the [Science Live platform](https://platform.sciencelive4all.org).
+Everything is read from its source on each run, with open tools only: Copernicus Sentinel-2 and Sentinel-3 from
+**ESA's EOPF Sample Service** (Zarr, opened lazily with `xr.open_datatree`), GBIF records through
+[healpix-connector](https://github.com/annefou/healpix-connector), and every source placed on **WGS84 NESTED HEALPix**
+cells with [healpix-geo](https://github.com/GRID4EARTH/healpix-geo) (GRID4EARTH). Intermediate HEALPix data are written as
+Zarr v3 following the [zarr-conventions/dggs](https://github.com/zarr-conventions/dggs) convention with a CF `healpix`
+grid mapping, as [healpix-convert](https://github.com/GRID4EARTH/healpix-convert) writes them.
 
----
+| Slide | Figure | Output | Data | Re-run check |
+|---|---|---|---|---|
+| 1 (cover) | Copernicus Sentinel-2, 15 Sep 2026: the Vallès, Montseny and the Maresme coast | `figures/catalonia_cover.jpg` | Sentinel-2 L2A T31TDG + T31TDF, 20 m, EOPF Zarr | **byte-identical** to the deck image (2026-10-06) |
+| 2 | The same scene as a band | `figures/catalonia_band.jpg` | same | **byte-identical** |
+| 9 | From the ground to space: GBIF plant records (depth 16, ~100 m), Sentinel-2 (depth 18, ~25 m), Sentinel-3 OLCI (depth 14, ~400 m), and the bridge (5 km zoom): each record on the HEALPix cell matching its stated uncertainty (25 m to 6 km), Sentinel-2 read on that same cell | `figures/bridge_strip.jpg`, `figures/panel*.png`, `results/montseny_healpix.zarr`, `results/records_support.csv`, `results/summary.csv` | Sentinel-2 L2A T31TDG 10 m; Sentinel-3 OLCI L1 EFR; GBIF plants 2025–2026 | the deck uses this output (2026-10-06); GBIF records retrieved 2026-10-06T07:11Z |
+| 8 | The HEALPix grid on WGS84 (globes) | upstream | — | [esa-frontiers-figures/sphere-vs-ellipsoid](https://github.com/annefou/esa-frontiers-figures/tree/main/sphere-vs-ellipsoid) |
+| 10 | BIOMASS forest height × GBIF, Beni | upstream | — | [esa-frontiers-figures/beni-biomass-forest-height](https://github.com/annefou/esa-frontiers-figures/tree/main/beni-biomass-forest-height) |
+
+Photos on slide 9 (drone, eDNA, LiDAR) are third-party images from Wikimedia Commons: step 5 downloads and crops them and
+records their licences; see DATA_LICENSES.md.
 
 ## Quick start
 
@@ -27,98 +37,29 @@ pixi install
 pixi run snakemake --cores 1
 ```
 
-(Pixi resolves `pixi.toml` against the per-platform `pixi.lock`, installs the env under `.pixi/`, and provides `pixi run` for any task without needing an `activate` step.)
+No credentials are needed. The four steps:
 
-Or with Docker:
+1. `notebooks/01_data_download.py` — Sentinel-2 / Sentinel-3 windows from EOPF Zarr; GBIF records via healpix-connector.
+2. `notebooks/02_data_clean.py` — every source onto its own HEALPix depth (dggs-convention Zarr).
+3. `notebooks/03_analysis.py` — the bridge: each GBIF record on the cell matching its uncertainty (finest depth whose
+   cell edge is at least twice the stated uncertainty, depth 6–18), Sentinel-2 read on that cell; records without a
+   stated uncertainty (290 of 861) are left out, not guessed. `results/records_support.csv`, `results/summary.csv`.
+4. `notebooks/04_figures.py` — the images used in the deck. Markers are colour-blind safe (Okabe-Ito yellow and white,
+   with a black halo).
+5. `notebooks/05_photos.py` — the three third-party photos of slide 9 (drone, eDNA, LiDAR) from Wikimedia Commons,
+   with author, licence and source read from the Commons API into `figures/photo_credits.json`.
 
-```bash
-docker run --rm ghcr.io/annefou/pangeo-keynote-figures:latest
-```
+Products, areas and depths are set in one place: `notebooks/config.py`.
 
-The Jupyter Book version is at <https://annefou.github.io/pangeo-keynote-figures/>.
+## Known limitations
 
-## Built from a template
+1. GBIF grows every day: a re-run returns more records than the 861 plant records retrieved on 2026-10-06T07:11Z for
+   the slide (the query is in `data/raw/sources.json`). A GBIF download DOI would pin them.
+2. The EOPF Sample Service is a preview service; product URLs may move when ESA moves to operational EOPF products.
+3. Sentinel-3 OLCI radiance is scaled to the Sentinel-2 reflectance of the same cells (per-band median ratio) **for
+   display only**, so that the panels differ by resolution, not by colour. The stored values are unscaled.
+4. Tile T31TDF lies at the swath edge of relative orbit 8; it only fills the rows below T31TDG.
 
-This repository was created from [`sciencelivehub/forrt-replication-template`](https://github.com/sciencelivehub/forrt-replication-template). The template ships an operating manual for AI assistants ([`CLAUDE.md`](CLAUDE.md), [`AGENTS.md`](AGENTS.md)), domain conventions ([`DOMAIN.md`](DOMAIN.md)), and reference docs (`docs/`) so that an AI working only inside this repository can guide a researcher from "paper PDF + GitHub repo" to "published FORRT chain + Zenodo DOI" with no other context.
+## Licence
 
-If you are reading this in a fresh fork, run [`/init-template`](.claude/skills/init-template/SKILL.md) inside Claude Code to substitute the placeholder tokens with your details. (For other AI tools, see [`docs/ai-portability.md`](docs/ai-portability.md).)
-
-After `/init-template`, do these one-time setup steps to enable the full CI/CD path:
-
-- **Enable GitHub Pages** at *Settings → Pages → Source: GitHub Actions*. Until enabled, the Jupyter Book build runs but the deploy step is skipped (CI stays green).
-- All three workflows share one **readiness guard** (`.github/actions/check-ready`). Before `/init-template` runs, the `.template-uninitialised` sentinel makes them skip with an informative `::notice::` (badges stay green); `/init-template` deletes the sentinel, which activates them. They also skip while `notebooks/*.py` are still scaffolds (Phase 2). **Once you've published a nanopub chain** (real URIs in `nanopubs/PUBLISHED.md`), a skip is treated as a bug and **fails the run loudly** — so a finished replication can't sit on silently-green-but-empty CI.
-
-## Repository structure
-
-```
-.
-├── CLAUDE.md / AGENTS.md       # operating manual for AI assistants
-├── DOMAIN.md                   # domain flavour (current: biodiversity + earth observation)
-├── USER_PREFERENCES.md         # per-user style (edit on first clone)
-├── README.md                   # this file
-├── LICENSE                     # MIT
-├── CITATION.cff                # how to cite
-├── codemeta.json               # software metadata (CodeMeta-2.0)
-├── ro-crate-metadata.json      # research object packaging (RO-Crate 1.2)
-├── pixi.toml + pixi.lock       # pinned dependencies (single source of truth; lockfile is per-platform)
-├── Dockerfile                  # container build
-├── Snakefile                   # pipeline orchestration
-├── myst.yml + index.md         # Jupyter Book scaffold
-├── paper/                      # the source paper PDF
-├── data/                       # downloaded artefacts (gitignored)
-├── notebooks/                  # jupytext .py pipeline (01–04)
-├── nanopubs/                   # FORRT chain drafts + published-URI registry
-├── docs/                       # reference material
-├── figures/                    # curated figures used in the Jupyter Book
-├── .github/workflows/          # CI, Jupyter Book, Docker
-└── .claude/                    # Claude Code agents, skills, sandbox config
-```
-
-## What you get
-
-This template bakes in conventions that took multiple replications to discover. By using it, you inherit:
-
-- **FAIR4RS conformance** — see [`docs/fair4rs-checklist.md`](docs/fair4rs-checklist.md) for the principle-by-principle mapping.
-- **Self-contained data downloads** — the first notebook fetches everything; no manual data prep.
-- **`pixi.toml` + `pixi.lock` as single source of truth** — local dev, Docker, and CI all install the same per-platform-pinned env.
-- **`prefix-dev/setup-pixi`-based CI** — caches the env, runs the pipeline with `pixi run`, executes notebooks via a glob, fails fast on a stale lockfile.
-- **Jupyter Book deployment** — auto-deploys to GitHub Pages with `BASE_URL` set correctly. (Don't put `base_url` in `myst.yml` — MyST silently ignores it.)
-- **Docker + GHCR + Zenodo image archival** — `release` trigger pushes to GHCR and (optionally) archives to Zenodo for long-term preservation.
-- **RO-Crate packaging** — the entire repo is a navigable Research Object via `ro-crate-metadata.json` (Process Run Crate + Workflow RO-Crate profiles).
-- **Six-step FORRT chain workspace** — `nanopubs/drafts/` has a field-by-field skeleton for each step. `nanopubs/PUBLISHED.md` is the URI registry.
-- **Layered AI guidance** — `CLAUDE.md` (universal) + `DOMAIN.md` (swappable per field) + `USER_PREFERENCES.md` (per-user). See [`docs/ai-portability.md`](docs/ai-portability.md) for non-Claude AI tools.
-- **Sandbox by default** — `.claude/settings.json` denies file ops outside the repo, so a fresh AI session can't accidentally read `~/.ssh/` or write to `/etc/`.
-
-## The six FORRT chain steps
-
-A complete FORRT chain has six steps published on [platform.sciencelive4all.org](https://platform.sciencelive4all.org):
-
-```
-Quote-with-comment  →  AIDA  →  FORRT Claim  →  Replication Study  →  Replication Outcome  →  CiTO Citation
-```
-
-(For question-rooted chains with no upstream paper, replace step 1 with PICO or PCC. See [`docs/chain-decision-tree.md`](docs/chain-decision-tree.md).)
-
-Drafts live in [`nanopubs/drafts/`](nanopubs/drafts/) field-by-field. Published URIs go into [`nanopubs/PUBLISHED.md`](nanopubs/PUBLISHED.md).
-
-Optional further layers:
-
-- **Research Software nanopub** — for reusable upstream tools (not demo repos). See [`docs/forrt-form-fields.md`](docs/forrt-form-fields.md) § Research Software.
-- **Research Synthesis nanopub** — when this chain is part of a multi-chain story. See [`docs/forrt-form-fields.md`](docs/forrt-form-fields.md) § Research Synthesis.
-
-## After publishing
-
-When the chain is live and the FAIR4RS checklist is green, drafting an announcement post is the next step. See [`docs/announcement-template.md`](docs/announcement-template.md) for the structural template (vision-piece-first; the worked replication is the payoff, not the lead).
-
-For lower-level nanopub work — retraction, superseding, batch publishing — see [`docs/programmatic-nanopubs.md`](docs/programmatic-nanopubs.md).
-
-## Citation
-
-If you use this work, please cite both:
-
-- This software: [`CITATION.cff`](CITATION.cff) → DOI [{{ZENODO_DOI}}]({{ZENODO_DOI}})
-- The original paper: [{{PAPER_DOI}}](https://doi.org/{{PAPER_DOI}})
-
-## Acknowledgements
-
-This repository was built from [`sciencelivehub/forrt-replication-template`](https://github.com/sciencelivehub/forrt-replication-template), part of the [Science Live platform](https://platform.sciencelive4all.org). The template is licensed MIT and contributions (especially new domain flavours under [`docs/domain-flavours/`](docs/domain-flavours/)) are welcome.
+Code: MIT. Data: see [DATA_LICENSES.md](DATA_LICENSES.md). Cite with [CITATION.cff](CITATION.cff).
