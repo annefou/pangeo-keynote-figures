@@ -7,6 +7,7 @@
 
 Code and data behind the Earth-observation figures of the keynote **"Pangeo: Openness for Sovereignty, Innovation,
 and Sustainable Communities"** (Anne Fouilloux, LifeWatch ERIC; OpenEarthMonitor final event, CREAF, 7 October 2026).
+Slides: [doi:10.5281/zenodo.23219029](https://doi.org/10.5281/zenodo.23219029).
 Built from the [FORRT replication template](https://github.com/ScienceLiveHub/forrt-replication-template): one Snakemake
 workflow, four jupytext notebooks, a pinned pixi environment, Docker, RO-Crate and GitHub Actions.
 
